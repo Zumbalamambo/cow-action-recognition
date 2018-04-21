@@ -30,7 +30,9 @@ if __name__ == '__main__' :
             tracker = cv2.TrackerGOTURN_create()
 
     # Read video
-    video = cv2.VideoCapture("../00_data/videos/video_2017070812.avi")
+    video = cv2.VideoCapture("../00_data/videos/video_2017070811.avi")
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('output.avi',fourcc, 20.0, (800,600))
 
     # Exit if video not opened.
     if not video.isOpened():
@@ -82,10 +84,13 @@ if __name__ == '__main__' :
 
         # Display FPS on frame
         cv2.putText(frame, "FPS : " + str(int(fps)), (100,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
-
+        out.write(frame)
         # Display result
-        cv2.imshow("Tracking", frame)
+        #cv2.imshow("Tracking", frame)
 
         # Exit if ESC pressed
         k = cv2.waitKey(1) & 0xff
         if k == 27 : break
+    out.release()
+    video.release()
+    cv2.destroyAllWindows()
