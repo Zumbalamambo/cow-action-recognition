@@ -45,7 +45,7 @@ def write(x, img):
     cls = int(x[-1])
     label = "{0}".format(classes[cls])
     color = random.choice(colors)
-    print(c1, c2, label)
+    #print(c1, c2, label)
     cv2.rectangle(img, c1, c2,color, 1)
     return img
 
@@ -64,6 +64,7 @@ def arg_parse():
     """
     parser = argparse.ArgumentParser(description='YOLO v3 Video Detection Module')
    
+    #parser.add_argument("--month", )
     parser.add_argument("--video", dest = 'video', help = 
                         "Video to run detection upon",
                         default = "video.avi", type = str)
@@ -143,6 +144,7 @@ if __name__ == '__main__':
             
             output = model(Variable(img, volatile = True), CUDA)
             output = write_results(output, confidence, num_classes, nms = True, nms_conf = nms_thesh)
+            
             if type(output) == int:
                 frames += 1
                 out.write(orig_im)
@@ -151,7 +153,7 @@ if __name__ == '__main__':
                 if key & 0xFF == ord('q'):
                     break
                 continue
-            
+ 
             if is_animal(output): 
                 output[:,1:5] = torch.clamp(output[:,1:5], 0.0, float(inp_dim))
             
@@ -160,6 +162,9 @@ if __name__ == '__main__':
             
                 list(map(lambda x: write(x, orig_im), output))
             
+            objs = [classes[int(x[-1])] for x in output]
+            print("Objects:", " ".join(objs))
+
             out.write(orig_im)
             #cv2.imshow("frame", orig_im)
             key = cv2.waitKey(1)
