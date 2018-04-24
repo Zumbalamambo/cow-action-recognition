@@ -87,7 +87,6 @@ if __name__ == '__main__':
                     for bbox in bboxes:
                         ious.append(bbox_iou2(bbox,pre_bbox))
                     line = [cows[0]] + bboxes[ious.index(max(ious))]
-                    print(line)
                     writer.writerow(line)
                     pre_bbox = bboxes[ious.index(max(ious))]
             cow += 1

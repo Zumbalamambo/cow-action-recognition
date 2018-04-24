@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     img_rootd = '/var/docker/data/cow/pics'
 
-    for hour in range(6,12):
+    for hour in range(6,14):
         hour = '%02d' % hour
         img_dir = img_rootd+'/'+args.day+'/'+args.day+hour
         img_list = sorted(glob.glob(os.path.join(img_dir, '*')))
