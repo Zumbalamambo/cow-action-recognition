@@ -72,6 +72,7 @@ if __name__ == '__main__':
             with open(out_dir+hour+'_'+str(cow-1)+'.csv', 'w') as f:
                 writer = csv.writer(f, lineterminator='\n')
                 print('cow-number:',str(cow))
+                pre_bbox = cows_coords[cow-1]
                 for cows in tqdm(reader):
                     num_bbox = int((len(cows)-1)/4)
                     bboxes = [ [cows[i*4+1], cows[i*4+2], cows[i*4+3], cows[i*4+4] ] for i in range(num_bbox) ]
@@ -84,10 +85,11 @@ if __name__ == '__main__':
                                 break
                     ious = []
                     for bbox in bboxes:
-                        ious.append(bbox_iou2(bbox,cows_coords[cow-1]))
+                        ious.append(bbox_iou2(bbox,pre_bbox))
                     line = [cows[0]] + bboxes[ious.index(max(ious))]
                     print(line)
                     writer.writerow(line)
+                    pre_bbox = bboxes[ious.index(max(ious))]
             cow += 1
         f.close()
 
