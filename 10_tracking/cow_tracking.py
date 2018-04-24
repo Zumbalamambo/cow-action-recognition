@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from util import *
-from bbox import bbox_iou
+from bbox import bbox_iou2
 import pandas as pd
 import random
 import argparse
@@ -15,12 +15,12 @@ def inc_cow(bbox_, cow_coords):
     iou_thesh = 0.7
     iou_over = 0
     for cow_coord in cow_coords:
-        iou = bbox_iou(bbox_, cow_coord)
+        iou = bbox_iou2(bbox_, cow_coord)
         if iou > iou_thesh:
             iou_over += 1
         if iou == 0.0 and len(cow_coords) <= max_num_cow:
             return True
-        if iou_over = max_num_cow:
+        if iou_over == max_num_cow:
             return False
     return False
 
@@ -33,8 +33,8 @@ def arg_parse():
 
 if __name__ == '__main__':
     args = arg_parse()
-    confidence = float(args.confidence)
-    nms_thesh = float(args.nms_thresh)
+    #confidence = float(args.confidence)
+    #nms_thesh = float(args.nms_thresh)
 
     iou_thesh = 0.7
 
@@ -51,30 +51,30 @@ if __name__ == '__main__':
 
         hour = str('%02d' % hour)
         detection_file = coord_dir + '/' + args.day+hour + '.csv'
-
-        with open(detection_file, 'r') as f:
-            reader = csv.reader(f)
+        print(detection_file,'--------------')
+        f = open(detection_file, 'r')
+        reader = csv.reader(f)
 
         # 牛の初期位置を覚えとく，適宜追加
         cows = []
-        cows_init = reader[0]
+        for row in reader:
+            cows_init = row
+            break
         max_num_cow = 2
-        num_cow_init = (len(cows_init)-1)/4
+        num_cow_init = int((len(cows_init)-1)/4)
         cows_coords = []
         for i in range(num_cow_init):
             cows_coords.append([cows_init[i*4+1], cows_init[i*4+2], cows_init[i*4+3], cows_init[i*4+4]])
 
-
         num_cow = num_cow_init
         cow = 1
-        while cow < num_cow or num_cow < 2:
+        while cow < 2:
             with open(out_dir+hour+'_'+str(cow-1)+'.csv', 'w') as f:
                 writer = csv.writer(f, lineterminator='\n')
-
-                for cows in reader[1:]:
-                    num_bbox = (len(cows)-1)/4
+                print('cow-number:',str(cow))
+                for cows in tqdm(reader):
+                    num_bbox = int((len(cows)-1)/4)
                     bboxes = [ [cows[i*4+1], cows[i*4+2], cows[i*4+3], cows[i*4+4] ] for i in range(num_bbox) ]
-
                     # 牛が増えた時,既にいる奴とIoU計算して，一番小さい座標の牛個体追加
                     if num_cow < num_bbox:
                         # 各ボックスのIoU計算，IoUが0があったらそいつを追加，全部どれかを超えてたら追加なし
@@ -84,10 +84,12 @@ if __name__ == '__main__':
                                 break
                     ious = []
                     for bbox in bboxes:
-                        ious.append(bbox_iou(bbox,cows_coords[cow-1]))
+                        ious.append(bbox_iou2(bbox,cows_coords[cow-1]))
                     line = [cows[0]] + bboxes[ious.index(max(ious))]
+                    print(line)
                     writer.writerow(line)
             cow += 1
+        f.close()
 
 
         '''
