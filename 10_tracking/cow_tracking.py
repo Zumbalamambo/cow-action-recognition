@@ -69,7 +69,7 @@ if __name__ == '__main__':
         num_cow = num_cow_init
         cow = 1
         while cow < 2:
-            with open(out_dir+hour+'_'+str(cow-1)+'.csv', 'w') as f:
+            with open(out_dir+'/'+args.day+hour+'_'+str(cow-1)+'.csv', 'w') as f:
                 writer = csv.writer(f, lineterminator='\n')
                 print('cow-number:',str(cow))
                 pre_bbox = cows_coords[cow-1]
