@@ -11,6 +11,8 @@ import random
 import pickle as pkl
 import argparse
 import csv
+import os
+import glob
 from tqdm import tqdm
 
 
@@ -56,17 +58,14 @@ def is_animal(x):
     else:
         return False
 
-def bb_iou(a, b):
-
-
 def arg_parse():
     parser = argparse.ArgumentParser(description='YOLO v3 Video Detection Module')
 
     parser.add_argument("--day", required = True)
     parser.add_argument("--base_hour", type = int, required = True)
     parser.add_argument("--hours", type = int, required = True)
-    parser.add_argument("--video", dest = 'video', help = "Video to run detection upon", default = "video.avi", type = str)
-    parser.add_argument("--dataset", dest = "dataset", help = "Dataset on which the network has been trained", default = "pascal")
+    #parser.add_argument("--video", dest = 'video', help = "Video to run detection upon", default = "video.avi", type = str)
+    #parser.add_argument("--dataset", dest = "dataset", help = "Dataset on which the network has been trained", default = "pascal")
     parser.add_argument("--confidence", dest = "confidence", help = "Object Confidence to filter predictions", default = 0.5)
     parser.add_argument("--nms_thresh", dest = "nms_thresh", help = "NMS Threshhold", default = 0.4)
     parser.add_argument("--cfg", dest = 'cfgfile', help ="Config file", default = "cfg/yolov3.cfg", type = str)
@@ -121,18 +120,19 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    last_hour = base_hour + hours
+    last_hour = args.base_hour + args.hours
 
-    for hour in range(base_hour, last_hour):
+    for hour in range(args.base_hour, last_hour):
         img_dir = img_rootd+'/'+args.day+str('%02d' % hour)
         img_list = sorted(glob.glob(os.path.join(img_dir, '*')))
-
+        
         out_file = out_dir + '/' + args.day + str('%02d' % hour) + '.csv'
-
+        print(out_file, "-----------------")
         with open(out_file, 'w') as f:
             writer = csv.writer(f, lineterminator='\n')
 
             for img_path in tqdm(img_list):
+            #for img_path in img_list:
                 img, orig_im, dim = prep_image(img_path, inp_dim)
                 im_dim = torch.FloatTensor(dim).repeat(1,2)
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
                 if type(output) == int:
                     frames += 1
-                    out.write(orig_im)
+                    #out.write(orig_im)
                     #cv2.imshow("frame", orig_im)
                     key = cv2.waitKey(1)
                     if key & 0xFF == ord('q'):
@@ -160,8 +160,14 @@ if __name__ == '__main__':
 
                     list(map(lambda x: write(x, orig_im), output))
 
-
-                objs = [classes[int(x[-1])] for x in output]
+                coords = [ list(map(int, x[1:5])) for x in output ]
+                coords_all = [img_path]
+                for coord in coords:
+                    coords_all += coord
+                writer.writerow(coords_all)
+                
+                #print(coords)
+                #objs = [classes[int(x[-1])] for x in output]
                 #print("Objects:", " ".join(objs))
 
                 #out.write(orig_im)
@@ -170,5 +176,3 @@ if __name__ == '__main__':
                 if key & 0xFF == ord('q'):
                     break
                 frames += 1
-            else:
-                break
