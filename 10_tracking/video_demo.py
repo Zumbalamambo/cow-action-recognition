@@ -1,4 +1,3 @@
-import time
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -6,10 +5,13 @@ import numpy as np
 import cv2
 from util import *
 from darknet import Darknet
+from bbox import bbox_iou
 import pandas as pd
 import random
 import pickle as pkl
 import argparse
+import csv
+from tqdm import tqdm
 
 
 def get_test_input(input_dim, CUDA):
@@ -25,14 +27,11 @@ def get_test_input(input_dim, CUDA):
 
     return img_
 
-def prep_image(img, inp_dim):
+def prep_image(img_path, inp_dim):
     """
-    Prepare image for inputting to the neural network.
-
-    Returns a Variable
+    Prepare image for inputting to the neural network. Returns a Variable
     """
-
-    orig_im = img
+    orig_im = cv2.imread(img_path)
     dim = orig_im.shape[1], orig_im.shape[0]
     img = cv2.resize(orig_im, (inp_dim, inp_dim))
     img_ = img[:,:,::-1].transpose((2,0,1)).copy()
@@ -45,7 +44,7 @@ def write(x, img):
     cls = int(x[-1])
     label = "{0}".format(classes[cls])
     color = random.choice(colors)
-    print(c1, c2, label)
+    #print(c1, c2, label)
     cv2.rectangle(img, c1, c2,color, 1)
     return img
 
@@ -57,36 +56,29 @@ def is_animal(x):
     else:
         return False
 
-def arg_parse():
-    """
-    Parse arguements to the detect module
+def bb_iou(a, b):
 
-    """
+
+def arg_parse():
     parser = argparse.ArgumentParser(description='YOLO v3 Video Detection Module')
 
-    parser.add_argument("--video", dest = 'video', help =
-                        "Video to run detection upon",
-                        default = "video.avi", type = str)
+    parser.add_argument("--day", required = True)
+    parser.add_argument("--base_hour", type = int, required = True)
+    parser.add_argument("--hours", type = int, required = True)
+    parser.add_argument("--video", dest = 'video', help = "Video to run detection upon", default = "video.avi", type = str)
     parser.add_argument("--dataset", dest = "dataset", help = "Dataset on which the network has been trained", default = "pascal")
     parser.add_argument("--confidence", dest = "confidence", help = "Object Confidence to filter predictions", default = 0.5)
     parser.add_argument("--nms_thresh", dest = "nms_thresh", help = "NMS Threshhold", default = 0.4)
-    parser.add_argument("--cfg", dest = 'cfgfile', help =
-                        "Config file",
-                        default = "cfg/yolov3.cfg", type = str)
-    parser.add_argument("--weights", dest = 'weightsfile', help =
-                        "weightsfile",
-                        default = "yolov3.weights", type = str)
-    parser.add_argument("--reso", dest = 'reso', help =
-                        "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
+    parser.add_argument("--cfg", dest = 'cfgfile', help ="Config file", default = "cfg/yolov3.cfg", type = str)
+    parser.add_argument("--weights", dest = 'weightsfile', help = "weightsfile", default = "yolov3.weights", type = str)
+    parser.add_argument("--reso", dest = 'reso', help = "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
                         default = "416", type = str)
     return parser.parse_args()
-
 
 if __name__ == '__main__':
     args = arg_parse()
     confidence = float(args.confidence)
     nms_thesh = float(args.nms_thresh)
-    start = 0
 
     classes = load_classes('data/coco.names')
     colors = pkl.load(open("pallete", "rb"))
@@ -120,51 +112,63 @@ if __name__ == '__main__':
 
     model.eval()
 
-    videofile = args.video
-
-    cap = cv2.VideoCapture(videofile)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output_2017080811.avi', fourcc, 20.0, (800,600)) 
-    assert cap.isOpened(), 'Cannot capture source'
-
     frames = 0
-    start = time.time()
-    while cap.isOpened():
 
-        ret, frame = cap.read()
-        if ret:
+    img_rootd = '../00_data/pics/'+args.day
 
-            img, orig_im, dim = prep_image(frame, inp_dim)
-            im_dim = torch.FloatTensor(dim).repeat(1,2)
+    out_dir = './00_coords/' + args.day
 
-            if CUDA:
-                im_dim = im_dim.cuda()
-                img = img.cuda()
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
-            output = model(Variable(img, volatile = True), CUDA)
-            output = write_results(output, confidence, num_classes, nms = True, nms_conf = nms_thesh)
-            if type(output) == int:
-                frames += 1
-                out.write(orig_im)
+    last_hour = base_hour + hours
+
+    for hour in range(base_hour, last_hour):
+        img_dir = img_rootd+'/'+args.day+str('%02d' % hour)
+        img_list = sorted(glob.glob(os.path.join(img_dir, '*')))
+
+        out_file = out_dir + '/' + args.day + str('%02d' % hour) + '.csv'
+
+        with open(out_file, 'w') as f:
+            writer = csv.writer(f, lineterminator='\n')
+
+            for img_path in tqdm(img_list):
+                img, orig_im, dim = prep_image(img_path, inp_dim)
+                im_dim = torch.FloatTensor(dim).repeat(1,2)
+
+                if CUDA:
+                    im_dim = im_dim.cuda()
+                    img = img.cuda()
+
+                output = model(Variable(img, volatile = True), CUDA)
+                output = write_results(output, confidence, num_classes, nms = True, nms_conf = nms_thesh)
+
+                if type(output) == int:
+                    frames += 1
+                    out.write(orig_im)
+                    #cv2.imshow("frame", orig_im)
+                    key = cv2.waitKey(1)
+                    if key & 0xFF == ord('q'):
+                        break
+                    continue
+
+                if is_animal(output):
+                    output[:,1:5] = torch.clamp(output[:,1:5], 0.0, float(inp_dim))
+
+                    im_dim = im_dim.repeat(output.size(0), 1)/inp_dim
+                    output[:,1:5] *= im_dim
+
+                    list(map(lambda x: write(x, orig_im), output))
+
+
+                objs = [classes[int(x[-1])] for x in output]
+                #print("Objects:", " ".join(objs))
+
+                #out.write(orig_im)
                 #cv2.imshow("frame", orig_im)
                 key = cv2.waitKey(1)
                 if key & 0xFF == ord('q'):
                     break
-                continue
-
-            if is_animal(output):
-                output[:,1:5] = torch.clamp(output[:,1:5], 0.0, float(inp_dim))
-
-                im_dim = im_dim.repeat(output.size(0), 1)/inp_dim
-                output[:,1:5] *= im_dim
-
-                list(map(lambda x: write(x, orig_im), output))
-
-            out.write(orig_im)
-            #cv2.imshow("frame", orig_im)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('q'):
+                frames += 1
+            else:
                 break
-            frames += 1
-        else:
-            break
