@@ -146,8 +146,11 @@ if __name__ == '__main__':
                     im_dim = im_dim.repeat(output.size(0), 1)/inp_dim
                     output[:,1:5] *= im_dim
 
-                coords = [ list(map(int, x[1:5])) for x in output ]
-                coords_all = [img_path]
-                for coord in coords:
-                    coords_all += coord
-                writer.writerow(coords_all)
+                    coords = [ list(map(int, x[1:5])) for x in output ]
+                    coords_all = [img_path]
+                    for coord in coords:
+                        coords_all += coord
+                    writer.writerow(coords_all)
+                else:
+                    coords_all = [img_path]
+                    writer.writerow(coords_all)
