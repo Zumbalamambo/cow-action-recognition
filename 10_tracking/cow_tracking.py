@@ -74,6 +74,9 @@ if __name__ == '__main__':
                 print('cow-number:',str(cow))
                 pre_bbox = cows_coords[cow-1]
                 for cows in tqdm(reader):
+                    if len(cows) == 1:
+
+                    else:
                     num_bbox = int((len(cows)-1)/4)
                     bboxes = [ [cows[i*4+1], cows[i*4+2], cows[i*4+3], cows[i*4+4] ] for i in range(num_bbox) ]
                     # 牛が増えた時,既にいる奴とIoU計算して，一番小さい座標の牛個体追加
