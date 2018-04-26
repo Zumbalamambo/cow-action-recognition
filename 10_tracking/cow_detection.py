@@ -5,7 +5,6 @@ import numpy as np
 import cv2
 from util import *
 from darknet import Darknet
-from bbox import bbox_iou
 import pandas as pd
 import random
 import pickle as pkl
@@ -146,8 +145,6 @@ if __name__ == '__main__':
 
                     im_dim = im_dim.repeat(output.size(0), 1)/inp_dim
                     output[:,1:5] *= im_dim
-
-                    #list(map(lambda x: write(x, orig_im), output))
 
                 coords = [ list(map(int, x[1:5])) for x in output ]
                 coords_all = [img_path]
