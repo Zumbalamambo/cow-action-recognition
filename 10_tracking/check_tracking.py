@@ -56,8 +56,8 @@ if __name__ == "__main__":
             cv2.rectangle(img, c1, c2, (0,0,255), 2)
 
         #sleep(0.05)
-        cv2.imshow('img',img)
-        #video.write(img)
+        #cv2.imshow('img',img)
+        video.write(img)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break
