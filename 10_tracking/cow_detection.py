@@ -63,7 +63,6 @@ def arg_parse():
     parser.add_argument("--day", required = True)
     parser.add_argument("--base_hour", type = int, required = True)
     parser.add_argument("--hours", type = int, required = True)
-    #parser.add_argument("--video", dest = 'video', help = "Video to run detection upon", default = "video.avi", type = str)
     #parser.add_argument("--dataset", dest = "dataset", help = "Dataset on which the network has been trained", default = "pascal")
     parser.add_argument("--confidence", dest = "confidence", help = "Object Confidence to filter predictions", default = 0.5)
     parser.add_argument("--nms_thresh", dest = "nms_thresh", help = "NMS Threshhold", default = 0.4)
@@ -76,8 +75,7 @@ def arg_parse():
 if __name__ == '__main__':
     args = arg_parse()
     confidence = float(args.confidence)
-    nms_thesh = float(args.nms_thresh)
-
+    nms_thresh = args.nms_thresh
     classes = load_classes('data/coco.names')
     colors = pkl.load(open("pallete", "rb"))
 
@@ -135,7 +133,7 @@ if __name__ == '__main__':
                     img = img.cuda()
 
                 output = model(Variable(img, volatile = True), CUDA)
-                output = write_results(output, confidence, num_classes, nms = True, nms_conf = nms_thesh)
+                output = write_results(output, confidence, num_classes, nms = True, nms_conf = nms_thresh)
 
                 if type(output) == int:
                     continue
