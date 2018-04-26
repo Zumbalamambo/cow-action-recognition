@@ -75,22 +75,22 @@ if __name__ == '__main__':
                 pre_bbox = cows_coords[cow-1]
                 for cows in tqdm(reader):
                     if len(cows) == 1:
-
+                        writer.writerow([cows[0]])
                     else:
-                    num_bbox = int((len(cows)-1)/4)
-                    bboxes = [ [cows[i*4+1], cows[i*4+2], cows[i*4+3], cows[i*4+4] ] for i in range(num_bbox) ]
-                    # 牛が増えた時,既にいる奴とIoU計算して，一番小さい座標の牛個体追加
-                    if num_cow < num_bbox:
-                        # 各ボックスのIoU計算，IoUが0があったらそいつを追加，全部どれかを超えてたら追加なし
-                        for bbox_ in bboxes:
-                            if inc_cow(bbox_, cows_coords):
-                                cows_coords.append(bbox_)
-                                break
-                    ious = []
-                    for bbox in bboxes:
-                        ious.append(bbox_iou2(bbox,pre_bbox))
-                    line = [cows[0]] + bboxes[ious.index(max(ious))]
-                    writer.writerow(line)
-                    pre_bbox = bboxes[ious.index(max(ious))]
+                        num_bbox = int((len(cows)-1)/4)
+                        bboxes = [ [cows[i*4+1], cows[i*4+2], cows[i*4+3], cows[i*4+4] ] for i in range(num_bbox) ]
+                        # 牛が増えた時,既にいる奴とIoU計算して，一番小さい座標の牛個体追加
+                        if num_cow < num_bbox:
+                            # 各ボックスのIoU計算，IoUが0があったらそいつを追加，全部どれかを超えてたら追加なし
+                            for bbox_ in bboxes:
+                                if inc_cow(bbox_, cows_coords):
+                                    cows_coords.append(bbox_)
+                                    break
+                        ious = []
+                        for bbox in bboxes:
+                            ious.append(bbox_iou2(bbox,pre_bbox))
+                        line = [cows[0]] + bboxes[ious.index(max(ious))]
+                        writer.writerow(line)
+                        pre_bbox = bboxes[ious.index(max(ious))]
             cow += 1
         f.close()

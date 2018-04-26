@@ -50,13 +50,14 @@ if __name__ == "__main__":
         #print(cow[0])
         img = cv2.imread(cow[0],1)
 
-        c1 = tuple(map(int,cow[1:3]))
-        c2 = tuple(map(int,cow[3:5]))
-        cv2.rectangle(img, c1, c2, (0,0,255), 2)
+        if len(cow) != 1:
+            c1 = tuple(map(int,cow[1:3]))
+            c2 = tuple(map(int,cow[3:5]))
+            cv2.rectangle(img, c1, c2, (0,0,255), 2)
 
         #sleep(0.05)
-        #cv2.imshow('img',img)
-        video.write(img)
+        cv2.imshow('img',img)
+        #video.write(img)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break
