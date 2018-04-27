@@ -87,11 +87,12 @@ if __name__ == '__main__':
                                     cows_coords.append(bbox_)
                                     break
                         ious = []
+                        # iou>th & 面積小さいで
                         for bbox in bboxes:
                             ious.append(bbox_iou2(bbox,pre_bbox))
                         iou = max(ious)
                         if iou > 0.1:
-                            line = [cows[0]] + bboxes[ious.index(max(ious))]
+                            line = [cows[0]] + bboxes[ious.index(max(ious))] + [str(iou)]
                             pre_bbox = bboxes[ious.index(max(ious))]
                         else:
 
