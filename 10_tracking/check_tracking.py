@@ -64,14 +64,14 @@ if __name__ == "__main__":
             img = cv2.imread(cow[0],1)
             cv2.rectangle(img, pre_c1, pre_c2, (255,0,0), 2)
 
-            iou = cow[-1]
-
             if len(cow) != 1:
                 c1 = tuple(map(int,cow[1:3]))
                 c2 = tuple(map(int,cow[3:5]))
                 cv2.rectangle(img, c1, c2, (0,0,255), 2)
                 pre_c1 = c1
                 pre_c2 = c2
+
+                iou = '{:.2}'.format(float(cow[-1]))
 
                 t_size = cv2.getTextSize(iou, cv2.FONT_HERSHEY_PLAIN, 1 , 1)[0]
                 c2 = c1[0] + t_size[0] + 3, c1[1] + t_size[1] + 4

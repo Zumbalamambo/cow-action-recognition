@@ -91,7 +91,7 @@ if __name__ == '__main__':
                         for bbox in bboxes:
                             ious.append(bbox_iou2(bbox,pre_bbox))
                         iou = max(ious)
-                        if iou > 0.1:
+                        if iou > 0.2:
                             line = [cows[0]] + bboxes[ious.index(max(ious))] + [str(iou)]
                             pre_bbox = bboxes[ious.index(max(ious))]
                         else:
